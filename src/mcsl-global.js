@@ -21,6 +21,9 @@
   var RELEASE_AT = 0.3;       // share of the "out" Lottie after which the page is usable
   var FIRST_LOAD_WAIT = 600;  // ms to wait for the Lottie on first load before a plain fade
   var LENIS_OPTIONS = { lerp: 0.1, wheelMultiplier: 0.7 };
+  var FOOTER_SHIFT = -25;     // % the footer content starts above its resting spot
+  var HERO_SHIFT = 25;        // % the hero content drifts down as it scrolls away
+  var PARALLAX_DARK = 0.5;    // strongest opacity of the dark overlay on footer and hero
 
   var hasGSAP = typeof window.gsap !== 'undefined';
   var hasST = typeof window.ScrollTrigger !== 'undefined';
@@ -1053,6 +1056,48 @@
     onCleanup(function () { ctx.revert(); });
   }
 
+  // ---------- Footer parallax (Osmo) ----------
+  // [data-footer-parallax] wrapper (overflow hidden) holds
+  // [data-footer-parallax-inner] (the footer) and [data-footer-parallax-dark]
+  // (overlay). The footer rises from FOOTER_SHIFT to rest and the overlay
+  // fades out while the footer scrolls into view, so it looks like it was
+  // underneath the page. Lives in the Footer MCSL component.
+  function initFooterParallax(container) {
+    if (!hasGSAP || !hasST || reducedMotion) return;
+    var ctx = gsap.context(function () {
+      container.querySelectorAll('[data-footer-parallax]').forEach(function (el) {
+        var inner = el.querySelector('[data-footer-parallax-inner]');
+        var dark = el.querySelector('[data-footer-parallax-dark]');
+        var tl = gsap.timeline({
+          scrollTrigger: { trigger: el, start: 'clamp(top bottom)', end: 'clamp(top top)', scrub: true }
+        });
+        if (inner) tl.from(inner, { yPercent: FOOTER_SHIFT, ease: 'none' });
+        if (dark) tl.from(dark, { opacity: PARALLAX_DARK, ease: 'none' }, '<');
+      });
+    }, container);
+    onCleanup(function () { ctx.revert(); });
+  }
+
+  // ---------- Hero parallax ----------
+  // The footer effect in reverse: [data-hero-parallax-inner] drifts down
+  // by HERO_SHIFT and [data-hero-parallax-dark] fades in while the hero
+  // scrolls away, so the next section reads as covering it.
+  function initHeroParallax(container) {
+    if (!hasGSAP || !hasST || reducedMotion) return;
+    var ctx = gsap.context(function () {
+      container.querySelectorAll('[data-hero-parallax]').forEach(function (el) {
+        var inner = el.querySelector('[data-hero-parallax-inner]');
+        var dark = el.querySelector('[data-hero-parallax-dark]');
+        var tl = gsap.timeline({
+          scrollTrigger: { trigger: el, start: 'top top', end: 'bottom top', scrub: true }
+        });
+        if (inner) tl.to(inner, { yPercent: HERO_SHIFT, ease: 'none' });
+        if (dark) tl.to(dark, { opacity: PARALLAX_DARK, ease: 'none' }, '<');
+      });
+    }, container);
+    onCleanup(function () { ctx.revert(); });
+  }
+
   // ---------- Footer water ripples ----------
   // WebGL effect, so it only starts when the footer is about to come into
   // view and pauses when it leaves (otherwise it freezes the browser right
@@ -1233,6 +1278,10 @@
   // ---------- Registry ----------
   function initPageFunctions(container) {
     container = container || document;
+    // Barba runs the beforeEnter hook on the first load as well as `once`,
+    // so the same container can arrive twice. Set each one up only once.
+    if (container._mcslInit) return;
+    container._mcslInit = true;
     var has = function (s) { return !!container.querySelector(s); };
 
     if (has('[data-bunny-background-init]')) safe('bunny video', function () { initBunnyPlayerBackground(container); });
@@ -1242,6 +1291,8 @@
     if (has('[data-step-timeline-init]')) safe('timeline', function () { initStepByStepTimeline(container); });
     if (has('.tinyflow-slider')) safe('slider', function () { initTinyflowSlider(container); });
     if (has('.sticky-section_panel')) safe('sticky panels', function () { initStickyPanels(container); });
+    if (has('[data-hero-parallax]')) safe('hero parallax', function () { initHeroParallax(container); });
+    if (has('[data-footer-parallax]')) safe('footer parallax', function () { initFooterParallax(container); });
     if (has('.mcsl-footer')) safe('footer ripples', function () { initFooterRipples(container); });
     if (has('[data-reveal-group]')) safe('reveal on scroll', function () { initContentRevealScroll(container); });
   }

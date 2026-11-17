@@ -9,6 +9,7 @@ It covers:
 - The navbar (theme per section, hide on scroll, mobile menu)
 - Reveal on scroll (`data-reveal-group`)
 - Page scripts: hero video, services hover, CSR marquee, counters, About timeline, Tinyflow slider, sticky service panels, footer ripples
+- Hero and footer parallax (`data-hero-parallax`, `data-footer-parallax`), replacing the old Webflow scroll interactions
 
 Page scripts only run on pages that contain their elements, so one file serves the whole site.
 
@@ -74,6 +75,9 @@ At the top of `src/mcsl-global.js`:
 | `RELEASE_AT` | `0.3` | How far into the "out" Lottie the new page becomes clickable |
 | `FIRST_LOAD_WAIT` | `600` | Milliseconds to wait for the Lottie on first load before a plain fade |
 | `LENIS_OPTIONS` | `{ lerp: 0.1, wheelMultiplier: 0.7 }` | Smooth scroll feel |
+| `FOOTER_SHIFT` | `-25` | % the footer content starts above its resting spot |
+| `HERO_SHIFT` | `25` | % the hero content drifts down as it scrolls away |
+| `PARALLAX_DARK` | `0.5` | Strongest opacity of the dark overlay on footer and hero |
 
 ## Adding a page script
 
@@ -86,3 +90,15 @@ At the top of `src/mcsl-global.js`:
    ```
 
 This works on a direct visit and after a Barba transition. Don't put scripts in a page's own custom code: Barba doesn't run them when someone arrives through a transition.
+
+## Parallax attributes
+
+Footer (set once in the Footer MCSL component):
+
+| Element | Attribute |
+| --- | --- |
+| Wrapper (`scroll_wrap`, overflow hidden) | `data-footer-parallax` |
+| Footer content (`scroll_target`) | `data-footer-parallax-inner` |
+| Overlay div (`parallax-dark`) | `data-footer-parallax-dark` |
+
+Hero (Home, CSR, Career): the same pattern on `top_wrap`, `top_target` and a `parallax-dark` div, with `data-hero-parallax`, `data-hero-parallax-inner` and `data-hero-parallax-dark`. To add it to another page's hero, copy that structure.

@@ -1,6 +1,6 @@
 {
   "name": "mcsl-scripts",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Global script for the MCSL Webflow site (mcsl-bd.com), served through jsDelivr.",
   "type": "module",

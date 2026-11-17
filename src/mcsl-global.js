@@ -16,7 +16,8 @@
   // =========================================================
 
   // ---------- Settings ----------
-  var LOTTIE_DURATION = 1.2;  // seconds each transition Lottie plays for
+  var LOTTIE_DURATION = 1.5;  // seconds each transition Lottie plays for
+  var LOGO_HOLD = 0.6;        // seconds the logo stays on screen before the cover lifts
   var FADE_DURATION = 0.25;   // navy colour + logo fade
   var RELEASE_AT = 0.3;       // share of the "out" Lottie after which the page is usable
   var FIRST_LOAD_WAIT = 600;  // ms to wait for the Lottie on first load before a plain fade
@@ -92,6 +93,37 @@
         toggle.classList.contains('stop-scroll') ? lenis.stop() : lenis.start();
       }
     });
+  }
+
+  // Scroll positions for every ScrollTrigger are measured once. Images,
+  // video, Lotties and counters keep changing the page height after that
+  // (Home grows by 2000px+), which left the footer parallax and reveals
+  // firing far above where their elements end up. Re-measure whenever the
+  // page height actually changes.
+  function watchPageHeight() {
+    if (!hasST || typeof ResizeObserver === 'undefined') return;
+    var lastHeight = document.documentElement.scrollHeight;
+    var timer = null;
+    new ResizeObserver(function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        var h = document.documentElement.scrollHeight;
+        if (Math.abs(h - lastHeight) < 2) return;
+        lastHeight = h;
+        if (lenis) lenis.resize();
+        refreshScroll();
+      }, 200);
+    }).observe(document.body);
+  }
+
+  // ScrollTrigger measures triggers in the order they were created. Webflow
+  // creates its own (e.g. the pinned scroll-break section on Home) after
+  // ours, so a pin above the footer was measured too late and everything
+  // below it ended up one screen off. Sorting first puts them in page order.
+  function refreshScroll() {
+    if (!hasST) return;
+    if (typeof ScrollTrigger.sort === 'function') ScrollTrigger.sort();
+    ScrollTrigger.refresh();
   }
 
   function scrollToTop() {
@@ -465,10 +497,13 @@
           resolveVisible();
         }
 
-        if (onStart) safe('reveal start', onStart);
-
         var tl = gsap.timeline({ paused: true });
-        tl.to([t.logo, t.color], { opacity: 0, duration: FADE_DURATION, ease: 'quart.out' });
+        var hold = reducedMotion ? 0 : LOGO_HOLD;
+        gsap.set([t.logo, t.color], { opacity: 1 });
+        // Logo holds on the navy cover, then the cover lifts. Reveals are
+        // armed as it starts lifting so they play where they can be seen.
+        if (onStart) tl.call(function () { safe('reveal start', onStart); }, null, hold);
+        tl.to([t.logo, t.color], { opacity: 0, duration: FADE_DURATION, ease: 'quart.out' }, hold);
         if (animate) {
           tl.add(playFrames(aOut, 0, lastFrame(aOut), LOTTIE_DURATION), '+=0.05');
           tl.call(release, null, '<' + (LOTTIE_DURATION * RELEASE_AT).toFixed(2));
@@ -1157,7 +1192,7 @@
     pendingReveals = [];
     if (!fns.length) return;
     fns.forEach(function (fn) { safe('reveal', fn); });
-    if (hasST) ScrollTrigger.refresh();
+    refreshScroll();
   }
 
   function initContentRevealScroll(container) {
@@ -1370,14 +1405,14 @@
         initPageFunctions(data.next.container);
         Nav.resetHide();
         Nav.refreshTheme();
-        if (hasST) ScrollTrigger.refresh();
+        refreshScroll();
       });
     });
 
     barba.hooks.afterEnter(function () {
       if (lenis) { lenis.resize(); lenis.start(); }
       scrollToHash();
-      if (hasST) ScrollTrigger.refresh();
+      refreshScroll();
       Nav.refreshTheme();
     });
 
@@ -1427,6 +1462,7 @@
   // =========================================================
   function boot() {
     initLenis();
+    watchPageHeight();
     Nav.init();
 
     var canUseBarba = !isEditor &&

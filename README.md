@@ -70,7 +70,8 @@ At the top of `src/mcsl-global.js`:
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| `LOTTIE_DURATION` | `1.2` | Seconds each transition Lottie plays for |
+| `LOTTIE_DURATION` | `1.5` | Seconds each transition Lottie plays for |
+| `LOGO_HOLD` | `0.6` | Seconds the logo stays on the navy cover before it lifts |
 | `FADE_DURATION` | `0.25` | Navy colour and logo fade |
 | `RELEASE_AT` | `0.3` | How far into the "out" Lottie the new page becomes clickable |
 | `FIRST_LOAD_WAIT` | `600` | Milliseconds to wait for the Lottie on first load before a plain fade |

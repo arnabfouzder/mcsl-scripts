@@ -35,6 +35,10 @@ GSAP and ScrollTrigger come from Webflow itself, so they are not in this list.
 
 The version in the URL (`@v1.0.0`) is a git tag. Pinning a tag means the site only changes when you change the URL, and browsers can cache the file for good.
 
+A commit hash works the same way: `.../mcsl-scripts@<commit-hash>/dist/mcsl-global.min.js`. Use the full hash from the commit page on GitHub. Avoid `@main`: jsDelivr caches branches for hours, so changes show up late and unpredictably.
+
+To create a tag without the command line: on GitHub, open Releases > Draft a new release, type the new tag (for example `v1.0.1`), pick `main` as the target and publish.
+
 ## Making a change
 
 1. Edit `src/mcsl-global.js`.
